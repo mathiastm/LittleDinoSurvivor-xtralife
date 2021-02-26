@@ -1,0 +1,21 @@
+{
+  "network": "anonymous",
+  "networkid": "6038182b90d488070dc9e484",
+  "registerTime": "2021-02-25T21:35:39.644Z",
+  "registerBy": "martin.mathias.little-dino-survival",
+  "games": [
+    {
+      "appid": "martin.mathias.little-dino-survival",
+      "ts": "2021-02-25T21:35:39.644Z",
+      "lastlogin": "2021-02-25T00:00:00.000Z"
+    }
+  ],
+  "profile": {
+    "displayName": "Guest",
+    "lang": "en"
+  },
+  "domains": [],
+  "servertime": "2021-02-25T21:35:39.662Z",
+  "gamer_id": "6038182b90d488070dc9e485",
+  "gamer_secret": "6cfd5697a2ec6718fb66775950cde6261ecc5273"
+}
