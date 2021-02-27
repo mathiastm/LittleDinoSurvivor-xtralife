@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using UnityEngine.UI;
 using TMPro;
 using CotcSdk;
+using RSG;
 
 public class LoginScript : MonoBehaviour
 {
@@ -23,6 +24,8 @@ public class LoginScript : MonoBehaviour
     {
         // login button click
         loginButton.onClick.AddListener(Login);
+
+        // logout button click
         logoutButton.onClick.AddListener(NotReadyToPlay);
         
         // Resume Xtralife Session if needed
@@ -49,89 +52,45 @@ public class LoginScript : MonoBehaviour
     }
     private void Login()
     {
-        var cotc = FindObjectOfType<CotcGameObject>();
-        cotc.GetCloud().Done(cloud => {
-            cloud.LoginAnonymously()
-            .Done(gamer => {
-                currentGamer = gamer;
-                SetPlayerPrefsData();
+        var cotcManager = FindObjectOfType<CotcManager>();
+        cotcManager.Login(userNameTextField.text)
+		    .Then(result => {
+		        Debug.Log(result);
+		        ReadyToPlay();
+		    })
+		    .Catch(exception => {
+		        Debug.LogError("An exception occured while CotcManager Login");
+		        NotReadyToPlay();
+		    });
 
-                Bundle profileUpdates = Bundle.CreateObject();
-                profileUpdates["displayName"] = new Bundle(userNameTextField.text);
-
-                // currentGamer is an object retrieved after one of the different Login functions.
-                currentGamer.Profile.Set(profileUpdates)
-                .Done(profileRes => {
-                    Debug.Log("Profile data set: " + profileRes.ToString());
-                    ReadyToPlay();
-
-                }, ex => {
-                    // The exception should always be CotcException
-                    CotcException error = (CotcException)ex;
-                    NotReadyToPlay();
-                    Debug.LogError("Could not set profile data due to error: " + error.ErrorCode + " (" + error.ErrorInformation + ")");
-                });
-            }, ex => {
-                // The exception should always be CotcException
-                CotcException error = (CotcException)ex;
-                NotReadyToPlay();
-                Debug.LogError("Failed to login: " + error.ErrorCode + " (" + error.HttpStatusCode + ")");
-            });
-        });  
     }
 
     private void ResumeSession(string gamerId = null, string gamerSecret = null)
     {
-        var cotc = FindObjectOfType<CotcGameObject>();
-
-        cotc.GetCloud().Done(cloud => {
-            cloud.ResumeSession(
-                gamerId: gamerId,
-                gamerSecret: gamerSecret)
-            .Done(gamer => {
-            	currentGamer = gamer;
-                ReadyToPlay();
-            }, ex => {
-                // The exception should always be CotcException
-                CotcException error = (CotcException)ex;
-                NotReadyToPlay();
-                Debug.LogError("Failed to login: " + error.ErrorCode + " (" + error.HttpStatusCode + ")");
-            });
-        });  
-    }
-
-    private void SetPlayerPrefsData(){
-    	PlayerPrefs.SetString("gamerId", currentGamer.GamerId);
-        PlayerPrefs.SetString("gamerSecret", currentGamer.GamerSecret);
-    }
-    private void ResetPlayerPrefsData(){
-        PlayerPrefs.SetString("gamerId", "");
-        PlayerPrefs.SetString("gamerSecret", "");
+    	var cotcManager = FindObjectOfType<CotcManager>();
+        cotcManager.ResumeSession(PlayerPrefs.GetString("gamerId"), PlayerPrefs.GetString("gamerSecret"))
+		    .Then(result => {
+		        Debug.Log(result);
+		        ReadyToPlay();
+		    })
+		    .Catch(exception => {
+		        Debug.LogError("An exception occured while CotcManager ResumeSession");
+		    	NotReadyToPlay();
+		    });
     }
 
     private void BestHighScores()
     {
-        // currentGamer is an object retrieved after one of the different Login functions.
-
-        currentGamer.Scores.Domain("private").BestHighScores("global", 10, 1)
-        .Done(bestHighScoresRes => {
-            hightScoreTable.scores = bestHighScoresRes;
-            hightScoreTable.ShowHightScores();
-        }, ex => {
-            // The exception should always be CotcException
-            CotcException error = (CotcException)ex;
-            Debug.LogError("Could not get best high scores: " + error.ErrorCode + " (" + error.ErrorInformation + ")");
-        });
+        var cotcManager = FindObjectOfType<CotcManager>();
+        cotcManager.BestHighScores();
     }
     private void ReadyToPlay(){
-        SetPlayerPrefsData();
         BestHighScores();
         playInterface.gameObject.SetActive(true);
         hightScoreTable.gameObject.SetActive(true);
         loginInterface.gameObject.SetActive(false);
     }
     private void NotReadyToPlay(){
-        ResetPlayerPrefsData();
         playInterface.gameObject.SetActive(false);
         hightScoreTable.gameObject.SetActive(false);
         loginInterface.gameObject.SetActive(true);

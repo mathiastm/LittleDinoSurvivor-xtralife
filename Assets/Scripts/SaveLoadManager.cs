@@ -61,6 +61,11 @@ public class SaveLoadManager : MonoBehaviour
         }
 
     }
+    private void ResumeSession(string gamerId = null, string gamerSecret = null)
+    {
+        var cotcManager = FindObjectOfType<CotcManager>();
+        cotcManager.ResumeSession(PlayerPrefs.GetString("gamerId"), PlayerPrefs.GetString("gamerSecret"));
+    }
 
     public void SaveScore()
     {
@@ -73,45 +78,11 @@ public class SaveLoadManager : MonoBehaviour
         PostScore(Score);
     }
 
-    private void ResumeSession(string gamerId = null, string gamerSecret = null)
-    {
-        var cotc = FindObjectOfType<CotcGameObject>();
-
-        cotc.GetCloud().Done(cloud => {
-            cloud.ResumeSession(
-                gamerId: gamerId,
-                gamerSecret: gamerSecret)
-            .Done(gamer => {
-                currentGamer = gamer;
-                SetPlayerPrefsData();
-            }, ex => {
-                // The exception should always be CotcException
-                CotcException error = (CotcException)ex;
-                Debug.LogError("Failed to login: " + error.ErrorCode + " (" + error.HttpStatusCode + ")");
-            });
-        });  
-    }
-
     private void PostScore(int score)
     {
-        // currentGamer is an object retrieved after one of the different Login functions.
+        var cotcManager = FindObjectOfType<CotcManager>();
+        cotcManager.PostScore(score);
+    }
 
-        currentGamer.Scores.Domain("private").Post(score, "global", ScoreOrder.HighToLow,
-        "", false)
-        .Done(postScoreRes => {
-            Debug.Log("Post score: " + postScoreRes.ToString());
-        }, ex => {
-            // The exception should always be CotcException
-            CotcException error = (CotcException)ex;
-            Debug.LogError("Could not post score: " + error.ErrorCode + " (" + error.ErrorInformation + ")");
-        });
-    }
-    private void SetPlayerPrefsData(){
-        PlayerPrefs.SetString("gamerId", currentGamer.GamerId);
-        PlayerPrefs.SetString("gamerSecret", currentGamer.GamerSecret);
-        Debug.Log("########## gamer.Profile.DisplayName ############");
-        Debug.Log(currentGamer["profile"]["displayName"]);
-        PlayerPrefs.SetString("gamerDisplayName", currentGamer["profile"]["displayName"]);
-    }
 
 }
